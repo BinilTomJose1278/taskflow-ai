@@ -25,7 +25,7 @@ class ProcessingService:
         """Create a new processing job"""
         
         # Generate unique job ID
-        job_id = str(uuid.uuid4())
+        job_id = str(uuid.uuid4()) 
         
         db_job = ProcessingJob(
             job_id=job_id,

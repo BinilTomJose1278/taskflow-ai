@@ -74,6 +74,13 @@ class Document(Base):
     ai_insights = Column(JSON, default=dict)
     confidence_score = Column(Float)
     
+    # Analysis status and results
+    analysis_status = Column(String(50), default='pending')  # pending, processing, completed, failed
+    analysis_results = Column(Text)  # JSON string of analysis results
+    analysis_started_at = Column(DateTime)
+    analysis_completed_at = Column(DateTime)
+    analysis_error = Column(Text)
+    
     # Relationships
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
     uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=False)

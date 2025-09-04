@@ -58,6 +58,7 @@ services:
     container_name: document_processing_app
     environment:
       - ENVIRONMENT=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - POSTGRES_SERVER=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
@@ -91,6 +92,7 @@ services:
     command: celery -A app.celery_app worker --loglevel=info
     environment:
       - ENVIRONMENT=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - POSTGRES_SERVER=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
@@ -117,6 +119,7 @@ services:
     command: celery -A app.celery_app beat --loglevel=info
     environment:
       - ENVIRONMENT=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - POSTGRES_SERVER=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password

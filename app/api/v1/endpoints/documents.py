@@ -21,6 +21,7 @@ from app.schemas.document import (
 from app.services.document_service import DocumentService
 from app.services.ai_service import AIService
 from app.services.file_service import FileService
+from app.services.document_analysis_service import DocumentAnalysisService
 from app.websocket.connection_manager import ConnectionManager
 
 # Create a global connection manager instance
@@ -226,8 +227,8 @@ async def download_document(
 @router.post("/{document_id}/analyze")
 async def analyze_document(
     document_id: int,
-    analysis_type: str = Form("all"),
-    custom_prompt: Optional[str] = Form(None),
+    analysis_type: str = Query("all", description="Type of analysis: summary, categorization, insights, all"),
+    custom_prompt: Optional[str] = Query(None),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     mongo_db = Depends(get_mongo_db)
@@ -302,3 +303,68 @@ async def search_documents(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error searching documents: {str(e)}")
+
+@router.get("/{document_id}/analysis")
+async def get_document_analysis(
+    document_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get the analysis results for a specific document"""
+    try:
+        document = db.query(Document).filter(Document.id == document_id).first()
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        if not document.analysis_results:
+            raise HTTPException(status_code=404, detail="No analysis results found for this document")
+        
+        import json
+        analysis_results = json.loads(document.analysis_results)
+        
+        return {
+            "document_id": document_id,
+            "analysis_status": document.analysis_status,
+            "analysis_completed_at": document.analysis_completed_at,
+            "analysis_results": analysis_results,
+            "analysis_error": document.analysis_error
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{document_id}/report")
+async def get_document_report(
+    document_id: int,
+    format: str = Query("json", description="Report format: json or pdf"),
+    db: Session = Depends(get_db)
+):
+    """Get a formatted report for a specific document"""
+    try:
+        document = db.query(Document).filter(Document.id == document_id).first()
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        if not document.analysis_results:
+            raise HTTPException(status_code=404, detail="No analysis results found. Please analyze the document first.")
+        
+        import json
+        analysis_results = json.loads(document.analysis_results)
+        
+        # Generate report
+        analysis_service = DocumentAnalysisService()
+        report = await analysis_service._generate_report(document, analysis_results, "")
+        
+        if format.lower() == "pdf":
+            # In a real implementation, you'd generate a PDF report
+            # For now, return the JSON report
+            return {
+                "message": "PDF generation not implemented yet",
+                "report": report
+            }
+        
+        return report
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
